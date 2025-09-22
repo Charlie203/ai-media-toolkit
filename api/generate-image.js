@@ -19,10 +19,17 @@ export default async function handler(req, res) {
             return res.status(400).json({ message: 'A prompt is required.' });
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+        // UPDATED: Switched to the free-tier friendly gemini-2.5-flash-image-preview model
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+        
+        // UPDATED: The payload structure is different for this model
         const payload = {
-            instances: [{ prompt: prompt }],
-            parameters: { "sampleCount": 1 }
+            "contents": [{
+                "parts": [{ "text": prompt }]
+            }],
+            "generationConfig": {
+                "responseModalities": ["IMAGE"]
+            }
         };
         
         const apiResponse = await fetch(apiUrl, {
@@ -37,10 +44,16 @@ export default async function handler(req, res) {
         }
 
         const result = await apiResponse.json();
-        const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+        
+        // UPDATED: The response structure is different, so we find the image data here
+        const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
         if (!base64Data) {
-            throw new Error('No image data received from the API.');
+            const blockReason = result?.promptFeedback?.blockReason;
+            if (blockReason) {
+                throw new Error(`Image generation blocked due to: ${blockReason}. Please try a different prompt.`);
+            }
+            throw new Error('No image data received from the API. The prompt may have been blocked for safety reasons.');
         }
 
         // Send the image data back to your webpage
@@ -51,3 +64,4 @@ export default async function handler(req, res) {
         res.status(500).json({ message: error.message });
     }
 }
+
