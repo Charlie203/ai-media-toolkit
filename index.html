@@ -70,13 +70,14 @@
         const promptInput = document.getElementById('ai-prompt');
         const outputDiv = document.getElementById('ai-output');
         const generateBtn = document.getElementById('ai-generate-btn');
+        const loader = '<div class="loader"></div>';
 
         if (!promptInput.value.trim()) {
             outputDiv.innerHTML = '<p class="text-red-500">Please enter a prompt.</p>';
             return;
         }
 
-        outputDiv.innerHTML = '<div class="loader"></div>';
+        outputDiv.innerHTML = loader;
         generateBtn.disabled = true;
         generateBtn.textContent = 'Generating...';
 
@@ -98,7 +99,8 @@
             if (!base64Data) throw new Error('No image data received from server.');
             
             const imageUrl = `data:image/png;base64,${base64Data}`;
-            outputDiv.innerHTML = `<a href="${imageUrl}" download="ai-generated-image.png"><img src="${imageUrl}" class="rounded-lg max-w-full h-auto"></a>`;
+            const downloadLink = `<a href="${imageUrl}" download="ai-generated-image.png" class="mt-4 bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-2 px-4 rounded-lg transition-colors">Download Image</a>`;
+            outputDiv.innerHTML = `<div class="flex flex-col items-center gap-4"><img src="${imageUrl}" class="rounded-lg max-w-full h-auto">${downloadLink}</div>`;
         } catch (error) {
             outputDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
         } finally {
@@ -109,3 +111,4 @@
 </script>
 </body>
 </html>
+
